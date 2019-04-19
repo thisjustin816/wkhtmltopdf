@@ -7,9 +7,14 @@ trigger:
 - master
 
 pool:
-  vmImage: 'Ubuntu-16.04'
+  vmImage: 'windows-2019'
 
 steps:
 - script: |
-    make
-  displayName: 'make'
+    choco install -yr --no-progress python2 nsis vcbuildtools && \
+    choco install -yr --no-progress cmake --installargs 'ADD_CMAKE_TO_PATH=System' && \
+    export PATH="$(powershell -Command '("Process", "Machine" | % { [Environment]::GetEnvironmentVariable("PATH", $_) -Split ";" -Replace "\\$", "" } | Select -Unique | % { cygpath $_ }) -Join ":"')" && \
+    C:/Python27/Scripts/pip install -q conan && \
+    sed -i 's/-W3/-w/g' qt/mkspecs/win32-msvc2015/qmake.conf && \
+    C:/Python27/python ../packaging/build vagrant msvc2015-win64 --version - - $PWD;
+  displayName: 'Build'
